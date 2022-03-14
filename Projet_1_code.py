@@ -22,7 +22,7 @@ th0_2 = np.pi/2
 p0_1 = 0
 p0_2 = 0
 
-#définision F(pour euler avant donc F[i])
+#définition F (pour euler avant donc F[i])
 def thstar(th1, th2, p1, p2):
     c1 = (m2*l2**2*p1-m2*l1*l2*np.cos(th1-th2)*p2)/(m2*l1**2*l2**2*(m1+m2*(np.sin(th1-th2))**2))
     c2 = ((m1+m2)*l1**2*p2-m2*l1*l2*np.cos(th1-th2)*p1)/(m2*l1**2*l2**2*(m1+m2*(np.sin(th1-th2))**2))
@@ -59,7 +59,6 @@ t, sol_th, sol_p = euler(th0_1, th0_2, p0_1, p0_2, k, tmax)
 t, sol_th1 ,sol_p1 = euler(th0_1+0.1,th0_2+0.1, p0_1+0.1,p0_2+0.1,k,tmax)
 
 
-
 #position des pendules
 x1 = l1*np.sin(sol_th[0,:])
 y1 = -l1*np.cos(sol_th[0,:])
@@ -76,7 +75,7 @@ fig, ax1=plt.subplots()
 ax1.plot(x1, y1, label="traj m1")
 ax1.plot(x2, y2, label="traj m2")
 #ax1.plot(x11, y11, label= "traj m11")
-#ax1.plot(x21, y21, label = "traj m21")
+ax1.plot(x21, y21, label = "traj m21")
 plt.title("Trajectoir des penules")
 plt.xlabel("x")
 plt.ylabel("y")
@@ -87,6 +86,9 @@ plt.show()
 fig, ax=plt.subplots()
 ax.plot(t,sol_th[0,:], label = "theta 1")
 ax.plot(t,sol_th[1,:], label = "theta 2")
+plt.xlabel("temp")
+plt.ylabel("rad (pas modulo)")
+plt.title("évolution des angles")
 plt.legend()
 plt.show()
 
@@ -105,6 +107,9 @@ fig, ax2=plt.subplots()
 #ax2.plot(t, E1, label = 'E1')
 #ax2.plot(t,E2, label = 'E2')
 ax2.plot(t, E, label = 'E1+E2')
+plt.xlabel('temps')
+plt.ylabel('Energie')
+plt.title("Energie")
 plt.legend()
 plt.show()
 
