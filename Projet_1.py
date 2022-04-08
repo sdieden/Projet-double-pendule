@@ -3,8 +3,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import  matplotlib.animation as animation
+from collections import deque
 
-from IPython.display import HTML
+from IPython.display import HTML, Image
+from IPython import display
 
 
 # Constantes du système
@@ -15,10 +17,13 @@ l1 = 1
 l2 = 1
 tmax = 10
 k = 0.01
+L = l1+l2
+history_len = 500  # how many trajectory points to display
+
 
 #conditions initialles
-th0_1 = 1
-th0_2 = np.pi/2
+th0_1 = np.pi/32
+th0_2 = np.pi/32
 p0_1 = 0
 p0_2 = 0
 
@@ -103,6 +108,9 @@ def RK4(th0_1, th0_2, p0_1, p0_2, k, tmax):
 t, sol_th, sol_p = Euler(th0_1, th0_2, p0_1, p0_2, k, tmax)
 t, sol_th1 ,sol_p1 = Euler(th0_1+0.01,th0_2+0.01, p0_1+0.01,p0_2+0.01,k,tmax)
 
+### Ne marche pas avec RK4
+# t, sol_th, sol_p = RK4(th0_1, th0_2, p0_1, p0_2, k, tmax)
+# t, sol_th1 ,sol_p1 = RK4(th0_1+0.01,th0_2+0.01, p0_1+0.01,p0_2+0.01,k,tmax)
 
 #position des pendules
 x1 = l1*np.sin(sol_th[0,:])
@@ -130,68 +138,68 @@ def derivee(x, t):
 v1 = derivee(pos1, t)
 v2 = derivee(pos2, t)
 
-#graph traj des pendules
-fig, ax1=plt.subplots()
-ax1.plot(x1, y1, label="traj m1")
-ax1.plot(x2, y2, label="traj m2")
-#ax1.plot(x11, y11, label= "traj m11")
-ax1.plot(x21, y21, label = "traj m21")
-plt.title("Trajectoir des penules")
-plt.xlabel("x")
-plt.ylabel("y")
-plt.legend()
-plt.show()
 
-#graph th1 th2
-fig, ax=plt.subplots()
-ax.plot(t,sol_th[0,:], label = "theta 1")
-ax.plot(t,sol_th[1,:], label = "theta 2")
-plt.xlabel("temp")
-plt.ylabel("rad (pas modulo)")
-plt.title("évolution des angles")
-plt.legend()
-plt.show()
+fig = plt.figure(figsize=(5, 4))
+ax = fig.add_subplot(autoscale_on=False, xlim=(-L, L), ylim=(-L, 1.))
+ax.set_aspect('equal')
+ax.grid()
 
-
-#Energie
-def Energie_calc(p,g,m,h):
-    return((p*p)/(2*m)- m*g*h) #((m*(v*v))/2 + m*g*h) 
-
-E1 = Energie_calc(sol_p[0,:],g,m1,y1)
-E2 = Energie_calc(sol_p[0,:],g,m2,y2)
-E = E1 +E2
-fig, ax2=plt.subplots()
-#ax2.plot(t, E1, label = 'E1')
-#ax2.plot(t,E2, label = 'E2')
-ax2.plot(t, E, label = 'E1+E2')
-plt.xlabel('temps')
-plt.ylabel('Energie')
-plt.title("Energie")
-plt.legend()
-plt.show()
-
+line, = ax.plot([], [], 'o-', lw=2)
+trace, = ax.plot([], [], '.-', lw=1, ms=2)
+time_template = 'time = %.1fs'
+time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
+history_x, history_y = deque(maxlen=history_len), deque(maxlen=history_len)
 
 # animation
-fig, ax = plt.subplots()
-def visualisation(t, th):
-    x1 = l1*np.sin(sol_th[0,:])
-    y1 = -l1*np.cos(sol_th[0,:])
-    x2 = x1 + l2*np.sin(sol_th[1,:])
-    y2 = y1 - l2*np.cos(sol_th[1,:])
-    ax.set_xlim(-(l1+l2), l1+l2)
-    ax.set_ylim(-(l1+l2), l1+l2)
-    line, = plt.plot([0,x1[0], x2[0]], [0, y1[0], y2[0]], linewidth=1, marker="o", color="red")
-    plt.title("position initiale du pendule")
-    plt.ylabel("y")
-    plt.xlabel("x")
-    def barre(i):
-        line.set_data([0,x1[i], x2[i]], [0, y1[i], y2[i]])
-        return line,
-    
-    ani = animation.FuncAnimation(fig, barre, frames=range(np.size(x1)), blit=True, interval=50)
-    return ani
+def animate(i):
+    thisx = [0, x1[i], x2[i]]
+    thisy = [0, y1[i], y2[i]]
 
-ani = visualisation(t, sol_th)
+    if i == 0 : 
+        history_x.clear()
+        history_y.clear()
+    history_x.appendleft(thisx[2])
+    history_y.appendleft(thisy[2])
+
+    line.set_data(thisx, thisy)
+    trace.set_data(history_x, history_y)
+    time_text.set_text(time_template % (i*k))
+    return line, trace, time_text
+
+ani = animation.FuncAnimation(
+    fig, animate,int(tmax/k), interval=k*1000, blit=True) #add len(y) pr éviter bug -> déterminer y c'est quoi ici
+plt.show()
+video = ani.to_html5_video()
+# html = display.HTML(video)
+# display.display(html)
+# plt.close()
+
+# Writer=animation.writers['ffmpeg']
+# writer=Writer(fps=10, metadata=dict(artist='Me'),bitrate=1800)
+# ani.save('animdp.mp4',writer=writer)
+
+
+
+# fig, ax = plt.subplots()
+# def visualisation(t, th):
+#     x1 = l1*np.sin(sol_th[0,:])
+#     y1 = -l1*np.cos(sol_th[0,:])
+#     x2 = x1 + l2*np.sin(sol_th[1,:])
+#     y2 = y1 - l2*np.cos(sol_th[1,:])
+#     ax.set_xlim(-(l1+l2), l1+l2)
+#     ax.set_ylim(-(l1+l2), l1+l2)
+#     line, = plt.plot([0,x1[0], x2[0]], [0, y1[0], y2[0]], linewidth=1, marker="o", color="red")
+#     plt.title("position initiale du pendule")
+#     plt.ylabel("y")
+#     plt.xlabel("x")
+#     def barre(i):
+#         line.set_data([0,x1[i], x2[i]], [0, y1[i], y2[i]])
+#         return line,
+    
+#     ani = animation.FuncAnimation(fig, barre, frames=range(np.size(x1)), blit=True, interval=50)
+#     return ani
+
+# ani = visualisation(t, sol_th)
 
 
 #HTML(ani.to_html5_video())
